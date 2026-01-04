@@ -101,6 +101,7 @@ def create_pdf(df: pd.DataFrame) -> bytes:
     # --- SECTION 2: EXECUTIVE SUMMARY ---
     # Calculate statistics once - optimized
     total_packets = len(df)
+    # Note: .str.upper() is necessary as model outputs may vary in case
     threat_mask = (df['Detected_Type'].str.upper() != 'BENIGN').values
     threat_count = int(threat_mask.sum())
     safe_count = total_packets - threat_count

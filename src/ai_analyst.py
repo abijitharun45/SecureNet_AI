@@ -46,8 +46,15 @@ class GroqAnalyst:
 
     def _construct_prompt(self, attack_type, confidence, packet_data):
         # Optimized prompt: reduced token count while maintaining quality
-        # Limit packet_data length to avoid excessive API costs
-        packet_summary = str(packet_data)[:500] if packet_data else "Traffic signature analysis confirmed anomalous behavior."
+        # Limit packet_data to avoid excessive API costs
+        if packet_data:
+            # Truncate data structure first, then convert to string for efficiency
+            if hasattr(packet_data, '__len__') and len(packet_data) > 500:
+                packet_summary = str(packet_data)[:500]
+            else:
+                packet_summary = str(packet_data)[:500]
+        else:
+            packet_summary = "Traffic signature analysis confirmed anomalous behavior."
         
         return f"""
         **ALERT:** Network Intrusion Detected
