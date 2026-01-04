@@ -11,3 +11,5 @@ __pycache__/
 
 # --- Local Secrets ---
 .env
+.streamlit/secrets.toml
+installed.txt
