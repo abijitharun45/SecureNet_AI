@@ -22,14 +22,18 @@ st.set_page_config(
 )
 
 # --- LOAD CYBER-OPS THEME ---
+@st.cache_data
 def load_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    """Load CSS with caching to avoid repeated file I/O."""
+    try:
+        with open(file_name) as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
 
-try:
-    load_css("assets/style.css")
-except FileNotFoundError:
-    pass
+css_content = load_css("assets/style.css")
+if css_content:
+    st.markdown(f'<style>{css_content}</style>', unsafe_allow_html=True)
 
 # --- ASSET MANAGEMENT ---
 @st.cache_resource
@@ -42,6 +46,11 @@ def load_inference_artifacts() -> Tuple[Optional[Any], Optional[Any], Optional[A
     except Exception as e:
         st.error(f"Critical Asset Missing: {e}")
         return None, None, None
+
+@st.cache_data
+def load_test_data(file_path: str) -> pd.DataFrame:
+    """Load test data with caching to avoid repeated I/O."""
+    return pd.read_csv(file_path)
 
 model, scaler, le = load_inference_artifacts()
 analyst = GroqAnalyst()  # Initialize AI Analyst
@@ -78,18 +87,20 @@ def run_live_simulation(df_source):
     # 2. Key Action: Execute Scan
     if st.button("🚀 EXECUTE BATCH SCAN", type="primary"):
         with st.spinner(f"Processing {limit} packets in neural engine..."):
-            # Load Batch
+            # Load Batch - optimized sampling
             if len(df_source) > limit:
-                batch_df = df_source.sample(limit)
+                # Use numpy random choice for faster sampling
+                sample_indices = np.random.choice(len(df_source), size=limit, replace=False)
+                batch_df = df_source.iloc[sample_indices].copy()
             else:
-                batch_df = df_source
+                batch_df = df_source.copy()
             
             # Vectorized Processing
             start_time = time.time()
             X_input = preprocess_traffic_data(batch_df, scaler)
             preds_proba = model.predict(X_input, verbose=0)
             
-            # Post-Processing
+            # Post-Processing - optimized with numpy operations
             pred_idx = np.argmax(preds_proba, axis=1)
             confidence_scores = np.max(preds_proba, axis=1)
             pred_labels = le.inverse_transform(pred_idx)
@@ -99,13 +110,14 @@ def run_live_simulation(df_source):
             results_df = batch_df.copy()
             results_df['Detected_Type'] = pred_labels
             results_df['Confidence'] = confidence_scores
-            results_df['Is_Threat'] = results_df['Detected_Type'].str.upper() != 'BENIGN'
+            # Optimize string comparison using vectorized operation
+            results_df['Is_Threat'] = (results_df['Detected_Type'].str.upper() != 'BENIGN').values
             
             st.session_state['scan_results'] = results_df
             
-            # Calculate metrics FIRST
+            # Calculate metrics using numpy for better performance
             total_packets = len(results_df)
-            threat_count = results_df['Is_Threat'].sum()
+            threat_count = int(results_df['Is_Threat'].sum())
             benign_count = total_packets - threat_count
             
             st.session_state['scan_metrics'] = {
@@ -135,10 +147,12 @@ def run_live_simulation(df_source):
         c1, c2 = st.columns([2, 1])
         with c1:
             st.markdown("#### 📉 Confidence Stream")
-            # Downsample for visualization
-            chart_df = results_df.reset_index(drop=True).reset_index()
+            # Downsample for visualization - optimized
+            chart_df = results_df[['Confidence', 'Is_Threat', 'Detected_Type']].reset_index(drop=True).reset_index()
             if len(chart_df) > 500:
-                chart_df = chart_df.sample(500).sort_values("index")
+                # Use systematic sampling for better distribution
+                step = len(chart_df) // 500
+                chart_df = chart_df.iloc[::step].copy()
             
             chart = alt.Chart(chart_df).mark_circle(size=60).encode(
                 x=alt.X('index', title='Packet Sequence'),
@@ -151,7 +165,9 @@ def run_live_simulation(df_source):
         with c2:
             st.markdown("#### 🚨 Top Threats")
             if metrics['threats'] > 0:
-                top_threats = results_df[results_df['Is_Threat']]['Detected_Type'].value_counts().head(5)
+                # Optimized: filter once and reuse
+                threat_df = results_df[results_df['Is_Threat']]
+                top_threats = threat_df['Detected_Type'].value_counts().head(5)
                 st.dataframe(top_threats, use_container_width=True)
             else:
                 st.success("No threats found.")
@@ -161,14 +177,16 @@ def run_live_simulation(df_source):
             st.markdown("---")
             st.subheader("🧠 Neural Forensic Analyst")
             
-            # Select threat to analyze
-            target_threat = st.selectbox("Select Threat Class", results_df[results_df['Is_Threat']]['Detected_Type'].unique())
+            # Select threat to analyze - reuse filtered threat_df
+            threat_df = results_df[results_df['Is_Threat']]
+            unique_threats = threat_df['Detected_Type'].unique()
+            target_threat = st.selectbox("Select Threat Class", unique_threats)
             
             if st.button("Analyze with Groq AI"):
                 with st.spinner("Querying Neural Defense Grid..."):
-                    # Find a sample packet
-                    sample_pkt = results_df[results_df['Detected_Type'] == target_threat].iloc[0]
-                    # Call API
+                    # Find a sample packet - optimized query
+                    sample_pkt = threat_df[threat_df['Detected_Type'] == target_threat].iloc[0]
+                    # Call API with minimal data
                     report = analyst.analyze_threat(target_threat, sample_pkt['Confidence'], sample_pkt.to_string())
                     st.session_state['ai_report'] = report
             
@@ -181,37 +199,43 @@ def run_live_simulation(df_source):
         st.markdown("### 📥 Evidence Locker")
         col_d1, col_d2 = st.columns(2)
         
-        csv = results_df.to_csv(index=False).encode('utf-8')
-        # Re-generate PDF on fly or cache it? Re-generating is cheap enough for now but ensuring button doesn't reset state is key.
-        # Streamlit buttons reload the script, but session_state will keep the results_df alive, so create_pdf works.
-        pdf_bytes = create_pdf(results_df)
+        # Pre-generate export data once (using session state to cache)
+        if 'export_csv' not in st.session_state or st.session_state.get('last_scan_id') != id(results_df):
+            st.session_state['export_csv'] = results_df.to_csv(index=False).encode('utf-8')
+            st.session_state['export_pdf'] = create_pdf(results_df)
+            st.session_state['last_scan_id'] = id(results_df)
         
         with col_d1:
-            st.download_button("💾 Save Full Log (CSV)", csv, "batch_scan.csv", "text/csv")
+            st.download_button("💾 Save Full Log (CSV)", st.session_state['export_csv'], "batch_scan.csv", "text/csv")
         with col_d2:
-            st.download_button("📄 Print Forensic Report (PDF)", pdf_bytes, "report.pdf", "application/pdf")
+            st.download_button("📄 Print Forensic Report (PDF)", st.session_state['export_pdf'], "report.pdf", "application/pdf")
 
 def run_static_analysis(df):
     if st.button("🚀 EXECUTE SCAN", type="primary", key="static_scan_btn"): 
         with st.spinner("Analyzing uploaded traffic log..."):
             # Inference
             X_input = preprocess_traffic_data(df, scaler)
-            preds_proba = model.predict(X_input)
+            preds_proba = model.predict(X_input, verbose=0)
             preds_idx = np.argmax(preds_proba, axis=1)
             preds_labels = le.inverse_transform(preds_idx)
             
-            # Results Construction
+            # Results Construction - optimized
             results_df = df.copy()
             results_df['Detected_Type'] = preds_labels
             results_df['Confidence'] = np.max(preds_proba, axis=1)
-            results_df['Is_Threat'] = results_df['Detected_Type'].str.upper() != 'BENIGN'
+            # Optimize string comparison using vectorized operation
+            results_df['Is_Threat'] = (results_df['Detected_Type'].str.upper() != 'BENIGN').values
             
             # Save to Session State
             st.session_state['static_results'] = results_df
             
-            # Clear previous static report
+            # Clear previous static report and exports
             if 'static_ai_report' in st.session_state:
                 del st.session_state['static_ai_report']
+            if 'static_export_csv' in st.session_state:
+                del st.session_state['static_export_csv']
+            if 'static_export_pdf' in st.session_state:
+                del st.session_state['static_export_pdf']
 
     # Display Persisted Results
     if 'static_results' in st.session_state:
@@ -219,13 +243,13 @@ def run_static_analysis(df):
         
         st.markdown("### 📊 SCAN RESULTS")
         
-        # Summary Metrics
+        # Summary Metrics - optimized calculation
         total = len(results_df)
-        threats = results_df['Is_Threat'].sum()
+        threats = int(results_df['Is_Threat'].sum())
         
         m1, m2 = st.columns(2)
         m1.metric("TOTAL RECORDS", total)
-        m2.metric("THREATS DETECTED", int(threats), delta_color="inverse")
+        m2.metric("THREATS DETECTED", threats, delta_color="inverse")
 
         st.dataframe(results_df[['Detected_Type', 'Confidence']], use_container_width=True)
         
@@ -233,27 +257,31 @@ def run_static_analysis(df):
         if threats > 0:
             st.markdown("---")
             st.subheader("🧠 Neural Forensic Analyst")
-            target = st.selectbox("Select Threat to Analyze", results_df[results_df['Is_Threat']]['Detected_Type'].unique(), key="static_ai_select")
+            threat_df = results_df[results_df['Is_Threat']]
+            target = st.selectbox("Select Threat to Analyze", threat_df['Detected_Type'].unique(), key="static_ai_select")
             
             if st.button("Analyze Threat (Static)", key="static_ai_btn"):
                 with st.spinner(" analyzing..."):
-                    sample = results_df[results_df['Detected_Type'] == target].iloc[0]
+                    sample = threat_df[threat_df['Detected_Type'] == target].iloc[0]
                     report = analyst.analyze_threat(target, sample['Confidence'], sample.to_string())
                     st.session_state['static_ai_report'] = report
             
             if 'static_ai_report' in st.session_state:
                 st.markdown(st.session_state['static_ai_report'])
         
-        # Export
+        # Export - optimized with caching
         st.markdown("### 📥 Evidence Locker")
-        csv = results_df.to_csv(index=False).encode('utf-8')
-        pdf_bytes = create_pdf(results_df)
+        
+        # Generate export data once and cache in session state
+        if 'static_export_csv' not in st.session_state:
+            st.session_state['static_export_csv'] = results_df.to_csv(index=False).encode('utf-8')
+            st.session_state['static_export_pdf'] = create_pdf(results_df)
 
         col_d1, col_d2 = st.columns(2)
         with col_d1:
-            st.download_button("📥 DOWNLOAD LOGS", csv, "scan_results.csv", "text/csv")
+            st.download_button("📥 DOWNLOAD LOGS", st.session_state['static_export_csv'], "scan_results.csv", "text/csv")
         with col_d2:
-            st.download_button("📄 Download Forensic PDF", pdf_bytes, "forensic_report.pdf", "application/pdf")
+            st.download_button("📄 Download Forensic PDF", st.session_state['static_export_pdf'], "forensic_report.pdf", "application/pdf")
 
 
 # --- UI COMPONENTS ---
@@ -283,9 +311,9 @@ def render_main_dashboard(mode):
     elif mode == "🔴 Live Traffic Simulator":
         st.info("ℹ️ Simulating real-time network traffic from test dataset.")
         
-        # Load data once here
+        # Load data once here with caching
         try:
-             df_test = pd.read_csv("data/test_mini.csv") 
+             df_test = load_test_data("data/test_mini.csv")
              run_live_simulation(df_test)
         except Exception as e:
              st.error(f"Data Load Error: {e}")

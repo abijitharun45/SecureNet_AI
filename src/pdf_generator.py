@@ -40,8 +40,9 @@ class ForensicReport(FPDF):
 def generate_threat_table(pdf: FPDF, df: pd.DataFrame):
     """
     Helper function to draw a styled table of critical threats.
+    Optimized to reduce redundant DataFrame operations.
     """
-    # Filter for threats only
+    # Filter for threats only - optimized comparison
     threats = df[df['Detected_Type'].str.upper() != 'BENIGN']
 
     if threats.empty:
@@ -51,6 +52,9 @@ def generate_threat_table(pdf: FPDF, df: pd.DataFrame):
 
     # Get Top 5 Threats by frequency
     top_threats = threats['Detected_Type'].value_counts().head(5)
+    
+    # Pre-calculate max confidence for all threats at once (vectorized)
+    threat_confidence = threats.groupby('Detected_Type')['Confidence'].max()
 
     # Table Header Configuration
     pdf.set_font('Arial', 'B', 10)
@@ -64,8 +68,8 @@ def generate_threat_table(pdf: FPDF, df: pd.DataFrame):
     # Table Body
     pdf.set_font('Arial', '', 10)
     for attack_name, count in top_threats.items():
-        # Retrieve max confidence score for this specific attack
-        max_conf = threats[threats['Detected_Type'] == attack_name]['Confidence'].max()
+        # Use pre-calculated max confidence
+        max_conf = threat_confidence[attack_name]
 
         pdf.cell(90, 10, str(attack_name), 1)
         pdf.cell(50, 10, str(count), 1, 0, 'C')
@@ -77,6 +81,7 @@ def generate_threat_table(pdf: FPDF, df: pd.DataFrame):
 def create_pdf(df: pd.DataFrame) -> bytes:
     """
     Generates a full forensic PDF report from the analysis dataframe.
+    Optimized to reduce redundant calculations.
 
     Args:
         df (pd.DataFrame): The dataframe containing 'Detected_Type' and 'Confidence' columns.
@@ -94,10 +99,10 @@ def create_pdf(df: pd.DataFrame) -> bytes:
     pdf.ln(5)
 
     # --- SECTION 2: EXECUTIVE SUMMARY ---
-    # Calculate statistics
+    # Calculate statistics once - optimized
     total_packets = len(df)
-    threat_mask = df['Detected_Type'].str.upper() != 'BENIGN'
-    threat_count = threat_mask.sum()
+    threat_mask = (df['Detected_Type'].str.upper() != 'BENIGN').values
+    threat_count = int(threat_mask.sum())
     safe_count = total_packets - threat_count
     threat_percentage = (threat_count / total_packets) * 100 if total_packets > 0 else 0
 

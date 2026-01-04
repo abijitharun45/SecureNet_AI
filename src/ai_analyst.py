@@ -45,18 +45,22 @@ class GroqAnalyst:
             return f"⚠️ **AI Analyst Offline:** {str(e)}\n\n" + self._fallback_analysis(attack_type)
 
     def _construct_prompt(self, attack_type, confidence, packet_data):
+        # Optimized prompt: reduced token count while maintaining quality
+        # Limit packet_data length to avoid excessive API costs
+        packet_summary = str(packet_data)[:500] if packet_data else "Traffic signature analysis confirmed anomalous behavior."
+        
         return f"""
         **ALERT:** Network Intrusion Detected
         **THREAT:** {attack_type}
         **CONFIDENCE:** {confidence:.1%}
         
-        **Additional Context:**
-        {packet_data if packet_data else "Traffic signature analysis confirmed anomalous behavior."}
+        **Context:**
+        {packet_summary}
 
         Provide a structured report:
-        1. **Attack Vector:** What is this attack doing? (1 sentence).
-        2. **Risk Assessment:** Why is this dangerous? (High/Critical).
-        3. **Immediate Mitigation:** 2-3 specific firewall rules or actions (e.g., Block UDP port 53, Rate limit SYN packets).
+        1. **Attack Vector:** What is this attack? (1 sentence).
+        2. **Risk Assessment:** Why dangerous? (High/Critical).
+        3. **Immediate Mitigation:** 2-3 specific actions (e.g., Block UDP port 53, Rate limit SYN packets).
         """
 
     def _fallback_analysis(self, attack_type):

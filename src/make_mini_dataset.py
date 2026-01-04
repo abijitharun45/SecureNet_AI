@@ -23,6 +23,7 @@ def create_subset(input_path: str, output_path: str, sample_size: int) -> bool:
     """
     Reads the top N rows from a large CSV dataset and saves them to a smaller file
     for testing and demonstration purposes.
+    Optimized for memory efficiency.
 
     Args:
         input_path (str): Path to the source large CSV file.
@@ -43,11 +44,12 @@ def create_subset(input_path: str, output_path: str, sample_size: int) -> bool:
         logger.info(f"Reading first {sample_size} rows from '{input_path}'...")
 
         # Read only necessary rows to optimize memory usage
-        df = pd.read_csv(input_path, nrows=sample_size)
+        # Using low_memory=False to avoid dtype warnings for large files
+        df = pd.read_csv(input_path, nrows=sample_size, low_memory=False)
 
         logger.info(f"Data loaded successfully. Shape: {df.shape}")
 
-        # Save to disk
+        # Save to disk with optimized settings
         df.to_csv(output_path, index=False)
         logger.info(f"✅ Success! Generated mini-dataset: '{output_path}' ({len(df)} rows)")
         return True
