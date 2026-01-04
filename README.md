@@ -11,9 +11,9 @@
 
 ## 🚀 Key Features
 * **Deep Packet Inspection:** Analyzes **40+ traffic features** per flow.
-* **Temporal Analysis:** Detects slow-pattern attacks (e.g., Slowloris, Heartbleed) using LSTM time-steps.
-* **Real-Time Dashboard:** Interactive Streamlit interface for live traffic scanning.
-* **Automated Forensics:** Generates instant PDF reports with "Red Alert" logic for high-confidence threats.
+* **Cyber-Ops Dashboard:** Futuristic dark/neon UI with **Vectorized Batch Processing** for scanning 1000+ packets/sec.
+* **AI Security Analyst:** Integrated **Groq (Llama 3.3 70B)** for real-time forensic reports and threat mitigation.
+* **Persistent Forensics:** State-managed analysis ensuring reports and logs persist during forensic deep-dives.
 
 ---
 
@@ -59,6 +59,10 @@ cd SecureNet_AI
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Configure Secrets
+# Create a file .streamlit/secrets.toml and add your Groq API key:
+# GROQ_API_KEY = "gsk_..."
 
 # Run the dashboard
 streamlit run Home.py

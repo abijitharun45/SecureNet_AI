@@ -1,0 +1,116 @@
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto:wght@300;400;700&display=swap');
+
+/* GLOBAL THEME */
+body {
+    background-color: #050505;
+    color: #e0e0e0;
+    font-family: 'Roboto', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Orbitron', sans-serif;
+    color: #00ff41; /* Cyber Green */
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* SIDEBAR */
+.css-1d391kg {
+    background-color: #0a0a0a;
+}
+
+/* METRICS & CARDS */
+div[data-testid="stMetric"] {
+    background-color: #111;
+    border: 1px solid #00ff41;
+    border-radius: 5px;
+    padding: 15px;
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+    transition: all 0.3s ease;
+}
+
+div[data-testid="stMetric"]:hover {
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+    transform: translateY(-2px);
+}
+
+div[data-testid="stMetricLabel"] {
+    color: #00ff41 !important;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+}
+
+div[data-testid="stMetricValue"] {
+    color: #ffffff !important;
+    text-shadow: 0 0 5px #00ff41;
+}
+
+/* ALERTS */
+.stAlert {
+    background-color: rgba(10, 10, 10, 0.9);
+    border-left: 5px solid;
+    border-radius: 0px;
+}
+
+/* DATAFRAME */
+div[data-testid="stDataFrame"] {
+    border: 1px solid #333;
+    font-family: 'Courier New', monospace;
+}
+
+/* BUTTONS */
+button[kind="primary"] {
+    background-color: #00ff41;
+    color: #000;
+    border: none;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: 0px;
+    transition: all 0.2s;
+}
+
+button[kind="primary"]:hover {
+    background-color: #00cc33;
+    box-shadow: 0 0 15px #00ff41;
+    transform: scale(1.05);
+}
+
+/* CUSTOM CLASSES */
+.cyber-card {
+    background: linear-gradient(135deg, rgba(0,255,65,0.05) 0%, rgba(0,0,0,0) 100%);
+    border: 1px solid #00ff41;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.cyber-card::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 10px;
+    height: 10px;
+    border-top: 2px solid #00ff41;
+    border-left: 2px solid #00ff41;
+}
+
+.cyber-header {
+    border-bottom: 2px solid #00ff41;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    display: inline-block;
+}
+
+/* ANIMATIONS */
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.blink {
+    animation: blink 2s infinite;
+}
