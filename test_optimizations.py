@@ -8,6 +8,10 @@ import sys
 import time
 from pathlib import Path
 
+# Constants
+MIN_TIME_THRESHOLD = 1e-9  # Minimum time threshold to avoid division by zero
+
+
 def test_syntax_validation():
     """Test that all Python files have valid syntax."""
     print("=" * 60)
@@ -67,7 +71,7 @@ def test_optimization_patterns():
             'threat_confidence'
         ],
         'src/ai_analyst.py': [
-            '[:500]',  # String truncation for API efficiency
+            'MAX_PACKET_DATA_LENGTH',  # String truncation constant for API efficiency
         ]
     }
     
@@ -165,7 +169,7 @@ def test_performance_simulation():
     threats_new = sum(1 for x in data if x != 'BENIGN')
     time_new = time.time() - start
     
-    speedup = (time_old / time_new) if time_new > 1e-9 else float('inf')
+    speedup = (time_old / time_new) if time_new > MIN_TIME_THRESHOLD else float('inf')
     print(f"String comparison test:")
     print(f"  Old approach: {time_old*1000:.2f}ms")
     print(f"  New approach: {time_new*1000:.2f}ms")
@@ -187,7 +191,7 @@ def test_performance_simulation():
         sample_new = indices[::step]  # New approach with step
     time_new = time.time() - start
     
-    speedup = (time_old / time_new) if time_new > 1e-9 else float('inf')
+    speedup = (time_old / time_new) if time_new > MIN_TIME_THRESHOLD else float('inf')
     print(f"\nSampling test:")
     print(f"  Old approach (random + sort): {time_old*1000:.2f}ms")
     print(f"  New approach (systematic): {time_new*1000:.2f}ms")

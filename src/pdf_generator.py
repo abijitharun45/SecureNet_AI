@@ -3,6 +3,9 @@ import pandas as pd
 from datetime import datetime
 from typing import Optional
 
+# Constants
+BENIGN_LABEL = 'BENIGN'  # Label for benign traffic
+
 
 class ForensicReport(FPDF):
     """
@@ -43,7 +46,7 @@ def generate_threat_table(pdf: FPDF, df: pd.DataFrame):
     Optimized to reduce redundant DataFrame operations.
     """
     # Filter for threats only - optimized comparison
-    threats = df[df['Detected_Type'].str.upper() != 'BENIGN']
+    threats = df[df['Detected_Type'].str.upper() != BENIGN_LABEL]
 
     if threats.empty:
         pdf.set_font('Arial', 'I', 11)
@@ -102,7 +105,7 @@ def create_pdf(df: pd.DataFrame) -> bytes:
     # Calculate statistics once - optimized
     total_packets = len(df)
     # Note: .str.upper() is necessary as model outputs may vary in case
-    threat_mask = (df['Detected_Type'].str.upper() != 'BENIGN').values
+    threat_mask = (df['Detected_Type'].str.upper() != BENIGN_LABEL).values
     threat_count = int(threat_mask.sum())
     safe_count = total_packets - threat_count
     threat_percentage = (threat_count / total_packets) * 100 if total_packets > 0 else 0
