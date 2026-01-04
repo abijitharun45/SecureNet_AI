@@ -10,13 +10,19 @@ st.set_page_config(
 )
 
 # --- LOAD CSS ---
+@st.cache_data
 def load_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    """Load CSS with caching to avoid repeated file I/O."""
+    try:
+        with open(file_name) as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
 
-try:
-    load_css("assets/style.css")
-except FileNotFoundError:
+css_content = load_css("assets/style.css")
+if css_content:
+    st.markdown(f'<style>{css_content}</style>', unsafe_allow_html=True)
+else:
     st.error("⚠️ CSS File not found. UI might look standard.")
 
 # --- SIDEBAR ---

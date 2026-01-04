@@ -2,6 +2,9 @@ import os
 import streamlit as st
 from groq import Groq
 
+# Constants
+MAX_PACKET_DATA_LENGTH = 500  # Maximum length for packet data in API requests
+
 class GroqAnalyst:
     def __init__(self, api_key=None):
         # Try to get API key from various sources
@@ -45,18 +48,25 @@ class GroqAnalyst:
             return f"⚠️ **AI Analyst Offline:** {str(e)}\n\n" + self._fallback_analysis(attack_type)
 
     def _construct_prompt(self, attack_type, confidence, packet_data):
+        # Optimized prompt: reduced token count while maintaining quality
+        # Limit packet_data to avoid excessive API costs
+        if packet_data:
+            packet_summary = str(packet_data)[:MAX_PACKET_DATA_LENGTH]
+        else:
+            packet_summary = "Traffic signature analysis confirmed anomalous behavior."
+        
         return f"""
         **ALERT:** Network Intrusion Detected
         **THREAT:** {attack_type}
         **CONFIDENCE:** {confidence:.1%}
         
-        **Additional Context:**
-        {packet_data if packet_data else "Traffic signature analysis confirmed anomalous behavior."}
+        **Context:**
+        {packet_summary}
 
         Provide a structured report:
-        1. **Attack Vector:** What is this attack doing? (1 sentence).
-        2. **Risk Assessment:** Why is this dangerous? (High/Critical).
-        3. **Immediate Mitigation:** 2-3 specific firewall rules or actions (e.g., Block UDP port 53, Rate limit SYN packets).
+        1. **Attack Vector:** What is this attack? (1 sentence).
+        2. **Risk Assessment:** Why dangerous? (High/Critical).
+        3. **Immediate Mitigation:** 2-3 specific actions (e.g., Block UDP port 53, Rate limit SYN packets).
         """
 
     def _fallback_analysis(self, attack_type):
