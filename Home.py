@@ -60,4 +60,4 @@ with col2:
 
 # Footer
 st.markdown("---")
-st.markdown("<center>SECURENET AI © 2024 | AUTHORIZED PERSONNEL ONLY</center>", unsafe_allow_html=True)
+st.markdown("<center>SECURENET AI © 2026 | AUTHORIZED PERSONNEL ONLY</center>", unsafe_allow_html=True)
