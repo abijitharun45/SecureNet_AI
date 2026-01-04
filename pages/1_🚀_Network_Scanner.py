@@ -112,6 +112,9 @@ def run_live_simulation(df_source):
             results_df['Confidence'] = confidence_scores
             # Optimize string comparison using vectorized operation
             results_df['Is_Threat'] = (results_df['Detected_Type'].str.upper() != 'BENIGN').values
+
+            # --- BONUS: GLOBAL THREAT MAP DATA ---
+            # (Map is now a static GIF for better aesthetics)
             
             st.session_state['scan_results'] = results_df
             
@@ -143,6 +146,44 @@ def run_live_simulation(df_source):
         k2.metric("THREATS DETECTED", int(metrics['threats']), delta_color="inverse")
         k3.metric("SAFE TRAFFIC", int(metrics['benign']))
         
+        # --- GLOBAL THREAT MAP ---
+        st.markdown("### 🗺️ LIVE GLOBAL THREAT TRACE")
+        
+        # 1. Map Selection Dropdown (Hidden power feature for you)
+        map_choice = st.selectbox(
+            "Select Intelligence Feed Source:",
+            ["Radware (Tactical Dark)", "SonicWall (High-Data)", "Fortinet (3D Globe)"],
+            label_visibility="collapsed" # Hides the label to keep it clean
+        )
+
+        try:
+            import streamlit.components.v1 as components
+            
+            # 2. Define the URLs for the maps you liked
+            map_urls = {
+                "Radware (Tactical Dark)": "https://livethreatmap.radware.com/",
+                "SonicWall (High-Data)": "https://attackmap.sonicwall.com/live-attack-map/",
+                "Fortinet (3D Globe)": "https://threatmap.fortiguard.com/"
+            }
+            
+            selected_url = map_urls[map_choice]
+
+            # 3. Render the Map in a nice clear window
+            # We use a slightly taller height (650px) to accommodate the flat maps better
+            components.iframe(
+                src=selected_url,
+                height=650,
+                scrolling=True
+            )
+            
+            # Dynamic Caption based on selection
+            st.caption(f"🔴 Live Feed: {map_choice} • Real-Time Attack Vector Analysis")
+
+        except Exception as e:
+            # Fallback text if internet/iframe fails
+            st.warning("⚠️ Live Map Feed Unavailable (Check Internet Connection)")
+        st.markdown("---")
+
         # Visualization
         c1, c2 = st.columns([2, 1])
         with c1:
