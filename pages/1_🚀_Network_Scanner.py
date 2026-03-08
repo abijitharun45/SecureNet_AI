@@ -357,14 +357,33 @@ def render_main_dashboard(mode):
             run_static_analysis(df) # Call directly without button
                 
     elif mode == "🔴 Live Traffic Simulator":
-        st.info("ℹ️ Simulating real-time network traffic from test dataset.")
+        # Data source selection
+        data_source = st.radio(
+            "Select Data Source:",
+            ["🗂️ Built-in Demo Dataset (CICIoT2023)", "📤 Upload Custom Dataset"],
+            horizontal=True
+        )
         
-        # Load data once here with caching
-        try:
-             df_test = load_test_data("data/test_mini.csv")
-             run_live_simulation(df_test)
-        except Exception as e:
-             st.error(f"Data Load Error: {e}")
+        if data_source == "🗂️ Built-in Demo Dataset (CICIoT2023)":
+            st.info("ℹ️ Simulating real-time network traffic from **15,000 pre-loaded CICIoT2023** test samples.")
+            try:
+                df_test = load_test_data("data/test_mini.csv")
+                run_live_simulation(df_test)
+            except Exception as e:
+                st.error(f"Data Load Error: {e}")
+        else:
+            st.info("ℹ️ Upload your own traffic dataset to run the live simulation on it.")
+            uploaded_sim_file = st.file_uploader("Upload Traffic Log (.csv)", type=['csv'], key="sim_upload")
+            if uploaded_sim_file:
+                df_custom = pd.read_csv(uploaded_sim_file)
+                # Validate: check it has enough numeric columns for the model
+                numeric_cols = df_custom.select_dtypes(include=[np.number]).shape[1]
+                if numeric_cols >= 2:
+                    st.success(f"✅ Dataset loaded: **{len(df_custom):,} rows**, **{df_custom.shape[1]} columns** ({numeric_cols} numeric features)")
+                    st.dataframe(df_custom.head(), use_container_width=True)
+                    run_live_simulation(df_custom)
+                else:
+                    st.error("❌ Invalid dataset — needs at least 2 numeric feature columns for analysis.")
 
 
 # --- APP EXECUTION ENTRY POINT ---
