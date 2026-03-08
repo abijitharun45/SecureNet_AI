@@ -41,7 +41,7 @@ with c2:
     st.markdown("""
     * **Overall Accuracy:** 78.49%
     * **Benign Recall:** 92% (High reliability for safe traffic)
-    * **Total Classes:** 34 Attack Types
+    * **Total Classes:** 33 Attack Types (7 Categories)
 
     The CNN-LSTM architecture prioritizes **spatial features** (CNN) and **temporal patterns** (LSTM) to detect complex attacks like Slowloris.
     """)

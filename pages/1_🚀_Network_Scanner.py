@@ -71,8 +71,16 @@ def preprocess_traffic_data(df: pd.DataFrame, scaler: Any) -> np.ndarray:
     data = df.drop('Label', axis=1) if 'Label' in df.columns else df
     try:
         X_scaled = scaler.transform(data)
-    except ValueError:
-        X_scaled = scaler.fit_transform(data)
+    except ValueError as e:
+        st.warning(f"⚠️ Feature mismatch detected ({data.shape[1]} cols vs expected). Auto-aligning columns...")
+        # Align columns to match scaler's expected features instead of re-fitting
+        expected = scaler.n_features_in_
+        if data.shape[1] < expected:
+            padding = pd.DataFrame(0, index=data.index, columns=range(data.shape[1], expected))
+            data = pd.concat([data, padding], axis=1)
+        elif data.shape[1] > expected:
+            data = data.iloc[:, :expected]
+        X_scaled = scaler.transform(data)
     
     X_aligned = align_feature_shape(X_scaled)
     return X_aligned.reshape(X_aligned.shape[0], SEQUENCE_LENGTH, MODEL_FEATURES)
@@ -218,8 +226,7 @@ def run_live_simulation(df_source):
             st.markdown("---")
             st.subheader("🧠 Neural Forensic Analyst")
             
-            # Select threat to analyze - reuse filtered threat_df
-            threat_df = results_df[results_df['Is_Threat']]
+            # Reuse threat_df already computed above (line 210)
             unique_threats = threat_df['Detected_Type'].unique()
             target_threat = st.selectbox("Select Threat Class", unique_threats)
             

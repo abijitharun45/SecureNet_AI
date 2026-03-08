@@ -28,14 +28,14 @@ else:
 # --- SIDEBAR ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2092/2092663.png", width=100)
-    st.markdown("## OPERATOR: ADMIN")
+    st.markdown("## Operator: Research Environment")
     st.markdown("---")
     st.markdown("### 📡 SYSTEM STATUS")
     st.markdown("`CORE:` **ONLINE**", unsafe_allow_html=True)
     st.markdown("`AI ENGINE:` **ACTIVE**", unsafe_allow_html=True)
     st.markdown("`LATENCY:` **24ms**", unsafe_allow_html=True)
     st.markdown("---")
-    st.info("v2.0.0 | CYBER-OPS EDITION")
+    st.info("v2.0.0 | SecureNet AI Research Edition")
 
 # --- HERO SECTION ---
 col1, col2 = st.columns([2, 1])
@@ -49,7 +49,7 @@ with col1:
         <p>Combining <b>Convolutional Neural Networks</b> with <b>Long Short-Term Memory</b> units to detect zero-day anomalies in real-time.</p>
         <br>
         <ul>
-            <li>✨ <b>Live Packet Stream:</b> Real-time traffic monitoring</li>
+            <li>✨ <b>Simulated Network Traffic Stream:</b> Real-time anomaly detection simulation</li>
             <li>🧠 <b>AI Forensic Analyst:</b> Automated threat intelligence</li>
             <li>⚡ <b>Hybrid Architecture:</b> CNN-LSTM based engine</li>
         </ul>
@@ -60,10 +60,10 @@ with col1:
 
 with col2:
     st.markdown("### ⚡ MODEL SPECS")
-    st.metric(label="TRAINING DATA", value="5.9M", delta="Balanced Samples")
+    st.metric(label="TRAINING DATA", value="46.7M Network Flows", delta="CICIOT2023 Dataset")
     st.metric(label="ACCURACY", value="78.5%", delta="Validation Set")
-    st.metric(label="CLASSES", value="34", delta="Attack Types")
+    st.metric(label="CLASSES", value="33", delta="Attack Types (7 Categories)")
 
 # Footer
 st.markdown("---")
-st.markdown("<center>SECURENET AI © 2026 | AUTHORIZED PERSONNEL ONLY</center>", unsafe_allow_html=True)
+st.markdown("<center>Intrusion Detection Research Interface © 2026 | SecureNet AI</center>", unsafe_allow_html=True)

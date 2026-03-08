@@ -6,8 +6,9 @@ __pycache__/
 
 # Ignore all CSVs by default
 *.csv
-# --- Exceptions
+# --- Exceptions (small files only)
 !data/test_mini.csv
+!data/sample_upload.csv
 
 # --- Local Secrets ---
 .env

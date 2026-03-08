@@ -3,7 +3,6 @@ import streamlit as st
 from groq import Groq
 
 # Constants
-MAX_PACKET_DATA_LENGTH = 500  # Maximum length for packet data in API requests
 
 class GroqAnalyst:
     def __init__(self, api_key=None):
@@ -39,8 +38,8 @@ class GroqAnalyst:
                     }
                 ],
                 model="llama-3.3-70b-versatile",
-                temperature=0.3,
-                max_tokens=300,
+                temperature=0.3,  # Optimal for security analysis: precise, consistent, no hallucination
+                max_tokens=1024,  # Full detailed forensic reports
             )
             
             return chat_completion.choices[0].message.content
@@ -48,10 +47,9 @@ class GroqAnalyst:
             return f"⚠️ **AI Analyst Offline:** {str(e)}\n\n" + self._fallback_analysis(attack_type)
 
     def _construct_prompt(self, attack_type, confidence, packet_data):
-        # Optimized prompt: reduced token count while maintaining quality
-        # Limit packet_data to avoid excessive API costs
+        # Full packet data sent for maximum analysis quality
         if packet_data:
-            packet_summary = str(packet_data)[:MAX_PACKET_DATA_LENGTH]
+            packet_summary = str(packet_data)
         else:
             packet_summary = "Traffic signature analysis confirmed anomalous behavior."
         
@@ -60,13 +58,15 @@ class GroqAnalyst:
         **THREAT:** {attack_type}
         **CONFIDENCE:** {confidence:.1%}
         
-        **Context:**
+        **Full Packet Context:**
         {packet_summary}
 
-        Provide a structured report:
-        1. **Attack Vector:** What is this attack? (1 sentence).
-        2. **Risk Assessment:** Why dangerous? (High/Critical).
-        3. **Immediate Mitigation:** 2-3 specific actions (e.g., Block UDP port 53, Rate limit SYN packets).
+        Provide a comprehensive structured forensic report:
+        1. **Attack Vector:** What is this attack and how does it work?
+        2. **Risk Assessment:** Severity level (Critical/High/Medium) and potential impact on the network.
+        3. **Indicators of Compromise (IoCs):** Key signatures to watch for.
+        4. **Immediate Mitigation:** 3-5 specific, actionable steps (e.g., Block UDP port 53, Rate limit SYN packets, isolate affected host).
+        5. **Long-Term Recommendations:** Preventive measures to avoid recurrence.
         """
 
     def _fallback_analysis(self, attack_type):

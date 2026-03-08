@@ -16,7 +16,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* SIDEBAR */
-.css-1d391kg {
+[data-testid="stSidebar"] {
     background-color: #0a0a0a;
 }
 
